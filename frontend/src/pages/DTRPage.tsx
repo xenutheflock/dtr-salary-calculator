@@ -120,7 +120,7 @@ export default function DTRPage() {
               </svg>
             </div>
             <span className="text-sm font-medium text-white tracking-tight">
-              DTR Calculator
+              DTR Calculator by Edzel
             </span>
           </div>
           <span className="text-[10px] font-mono text-zinc-600 bg-white/[0.03] px-2 py-1 rounded-full border border-white/[0.06]">
