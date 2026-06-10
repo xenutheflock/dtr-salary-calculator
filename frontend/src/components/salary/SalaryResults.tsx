@@ -1,4 +1,12 @@
-export default function SalaryResults() {
+import type { Cutoff, SalaryResult } from '@/types/dtr'
+import { formatCurrency } from '@/utils/salary'
+
+interface SalaryResultsProps {
+  result: SalaryResult | null
+  cutoff: Cutoff
+}
+
+export default function SalaryResults({ result, cutoff }: SalaryResultsProps) {
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
       {/* Header */}
@@ -9,7 +17,47 @@ export default function SalaryResults() {
         </p>
       </div>
 
-      {/* Empty state */}
+      {result ? (
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+              <p className="text-xs text-zinc-500">Total Hours</p>
+              <p className="mt-1 text-xl font-mono text-white">{result.totalHours.toFixed(2)}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+              <p className="text-xs text-zinc-500">Net Pay</p>
+              <p className="mt-1 text-xl font-mono text-emerald-400">{formatCurrency(result.netPay)}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-zinc-500">Total Hours × Hourly Rate</span>
+              <span className="font-mono text-zinc-300">{result.totalHours.toFixed(2)} × {formatCurrency(result.hourlyRate)}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-zinc-500">Base Pay</span>
+              <span className="font-mono text-white">{formatCurrency(result.basePay)}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-zinc-500">Additional Earnings</span>
+              <span className="font-mono text-white">{formatCurrency(result.additionalEarnings)}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-zinc-500">Gross Pay</span>
+              <span className="font-mono text-white">{formatCurrency(result.grossPay)}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-zinc-500">Deduction ({cutoff} cutoff × {(result.deductionRate * 100).toFixed(0)}%)</span>
+              <span className="font-mono text-red-400">-{formatCurrency(result.deduction)}</span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-zinc-300 font-medium">Net Pay</span>
+              <span className="font-mono text-lg text-emerald-400">{formatCurrency(result.netPay)}</span>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
           <svg
@@ -31,6 +79,7 @@ export default function SalaryResults() {
           Complete the steps above and click Calculate Salary to see your breakdown.
         </p>
       </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import SectionCard from '@/components/shared/SectionCard'
+import type { Cutoff } from '@/types/dtr'
 
 const options = [
   {
@@ -15,7 +16,12 @@ const options = [
   },
 ]
 
-export default function CutoffSelector() {
+interface CutoffSelectorProps {
+  value: Cutoff
+  onChange: (value: Cutoff) => void
+}
+
+export default function CutoffSelector({ value, onChange }: CutoffSelectorProps) {
   return (
     <SectionCard
       step={4}
@@ -26,7 +32,13 @@ export default function CutoffSelector() {
         {options.map((option) => (
           <button
             key={option.value}
-            className="group relative flex flex-col gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-5 text-left transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04] cursor-pointer"
+            type="button"
+            onClick={() => onChange(option.value as Cutoff)}
+            className={`group relative flex flex-col gap-1 rounded-xl border p-5 text-left transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04] cursor-pointer ${
+              value === option.value
+                ? 'border-white/20 bg-white/[0.06]'
+                : 'border-white/[0.08] bg-white/[0.02]'
+            }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-white">

@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import HourlyRateInput from '@/components/dtr/HourlyRateInput'
 import DTRUpload from '@/components/dtr/DTRUpload'
 import DTRTable from '@/components/dtr/DTRTable'
@@ -5,8 +6,95 @@ import CutoffSelector from '@/components/salary/CutoffSelector'
 import AdditionalEarnings from '@/components/salary/AdditionalEarnings'
 import SalaryResults from '@/components/salary/SalaryResults'
 import { Button } from '@/components/ui/button'
+import { useDtrOcr } from '@/hooks/useDtrOcr'
+import type { AdditionalEarningsValues, Cutoff, DtrRow, UploadSide } from '@/types/dtr'
+import { calculateSalary, enrichRowsWithHours } from '@/utils/salary'
+import { validateEarnings, validateHourlyRate, validateImage, validateRows } from '@/utils/validation'
+
+const initialEarnings: AdditionalEarningsValues = {
+  transport: '',
+  legalHoliday: '',
+  specialHoliday: '',
+  nightDiff: '',
+  other: '',
+}
+
+function createEmptyRow(): DtrRow {
+  return {
+    id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    date: '',
+    timeIn: '',
+    breakOut: '',
+    breakIn: '',
+    timeOut: '',
+  }
+}
 
 export default function DTRPage() {
+  const [hourlyRate, setHourlyRate] = useState('')
+  const [rows, setRows] = useState<DtrRow[]>([])
+  const [cutoff, setCutoff] = useState<Cutoff>('15th')
+  const [earnings, setEarnings] = useState<AdditionalEarningsValues>(initialEarnings)
+  const [hasCalculated, setHasCalculated] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const { uploads, recognize, setUploadError } = useDtrOcr()
+
+  const rowsWithHours = useMemo(() => enrichRowsWithHours(rows), [rows])
+  const salaryResult = useMemo(
+    () => calculateSalary(rowsWithHours, hourlyRate, earnings, cutoff),
+    [rowsWithHours, hourlyRate, earnings, cutoff],
+  )
+  const earningsErrors = useMemo(() => validateEarnings(earnings), [earnings])
+  const hourlyRateError = hasCalculated ? validateHourlyRate(hourlyRate) : null
+
+  const handleUpload = async (side: UploadSide, file: File) => {
+    setFormError(null)
+
+    const uploadError = validateImage(file)
+    if (uploadError) {
+      setUploadError(side, file.name, uploadError)
+      return
+    }
+
+    const extractedRows = await recognize(side, file)
+    if (extractedRows.length > 0) {
+      setRows((current) => [...current, ...extractedRows])
+      setHasCalculated(false)
+    }
+  }
+
+  const updateRow = (id: string, field: keyof Omit<DtrRow, 'id'>, value: string) => {
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
+    )
+    setHasCalculated(false)
+  }
+
+  const removeRow = (id: string) => {
+    setRows((current) => current.filter((row) => row.id !== id))
+    setHasCalculated(false)
+  }
+
+  const addRow = () => {
+    setRows((current) => [...current, createEmptyRow()])
+    setHasCalculated(false)
+  }
+
+  const handleCalculate = () => {
+    const rowError = validateRows(rowsWithHours)
+    const rateError = validateHourlyRate(hourlyRate)
+    const hasEarningsError = Object.keys(earningsErrors).length > 0
+
+    setHasCalculated(true)
+
+    if (rateError || rowError || hasEarningsError) {
+      setFormError(rateError ?? rowError ?? 'Fix invalid additional earnings before calculating.')
+      return
+    }
+
+    setFormError(null)
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Subtle gradient at top */}
@@ -55,26 +143,28 @@ export default function DTRPage() {
 
         {/* Sections */}
         <div className="flex flex-col gap-4">
-          <HourlyRateInput />
-          <DTRUpload />
-          <DTRTable />
-          <CutoffSelector />
-          <AdditionalEarnings />
+          <HourlyRateInput value={hourlyRate} onChange={setHourlyRate} error={hourlyRateError} />
+          <DTRUpload uploads={uploads} onUpload={handleUpload} />
+          <DTRTable rows={rowsWithHours} onAddRow={addRow} onRemoveRow={removeRow} onUpdateRow={updateRow} />
+          <CutoffSelector value={cutoff} onChange={setCutoff} />
+          <AdditionalEarnings values={earnings} errors={earningsErrors} onChange={setEarnings} />
         </div>
 
         {/* Calculate button */}
         <div className="mt-6">
           <Button
             size="lg"
+            onClick={handleCalculate}
             className="w-full bg-white text-black hover:bg-zinc-100 font-medium transition-all duration-200 rounded-xl h-12 text-sm"
           >
             Calculate Salary
           </Button>
+          {formError && <p className="mt-3 text-xs text-red-400 text-center">{formError}</p>}
         </div>
 
         {/* Results */}
         <div className="mt-6">
-          <SalaryResults />
+          <SalaryResults result={hasCalculated && !formError ? salaryResult : null} cutoff={cutoff} />
         </div>
 
         {/* Footer */}
