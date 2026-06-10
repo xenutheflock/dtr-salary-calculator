@@ -11,7 +11,6 @@ interface DTRTableProps {
 }
 
 const fields: Array<{ key: keyof Omit<DtrRow, 'id'>; label: string; placeholder: string }> = [
-  { key: 'date', label: 'Date', placeholder: 'Mar 3' },
   { key: 'timeIn', label: 'Time In', placeholder: '09:56' },
   { key: 'breakOut', label: 'Break Out', placeholder: '13:03' },
   { key: 'breakIn', label: 'Break In', placeholder: '14:02' },
@@ -52,45 +51,57 @@ export default function DTRTable({ rows, onAddRow, onRemoveRow, onUpdateRow }: D
       </div>
       ) : (
         <div className="space-y-4">
-          <div className="overflow-hidden">
-            <table className="w-full table-fixed border-separate border-spacing-y-2">
-              <thead>
-                <tr>
+          <div className="space-y-2">
+            <div className="hidden grid-cols-[repeat(4,1fr)_0.8fr_auto] gap-1 sm:grid">
+              {fields.map((field) => (
+                <span key={field.key} className="px-1 text-[9px] font-mono uppercase tracking-wide text-zinc-600">
+                  {field.label}
+                </span>
+              ))}
+              <span className="px-1 text-[9px] font-mono uppercase tracking-wide text-zinc-600">Hours</span>
+              <span className="px-1 text-[9px] font-mono uppercase tracking-wide text-zinc-600">Remove</span>
+            </div>
+
+            {rows.map((row, rowIndex) => (
+              <div key={row.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(4,1fr)_0.8fr_auto] sm:items-start sm:gap-1">
                   {fields.map((field) => (
-                    <th key={field.key} className="px-1 pb-1 text-left text-[9px] font-mono uppercase tracking-wide text-zinc-600">
-                      {field.label}
-                    </th>
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[9px] font-mono uppercase tracking-wide text-zinc-600 sm:hidden">
+                        {field.label}
+                      </label>
+                      <Input
+                        value={row[field.key]}
+                        placeholder={field.placeholder}
+                        onChange={(event) => onUpdateRow(row.id, field.key, event.target.value)}
+                        className="h-8 px-2 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-zinc-700 focus:border-white/20 font-mono text-xs"
+                      />
+                    </div>
                   ))}
-                  <th className="px-1 pb-1 text-left text-[9px] font-mono uppercase tracking-wide text-zinc-600">Hours</th>
-                  <th className="px-2 pb-1" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    {fields.map((field) => (
-                      <td key={field.key} className="px-0.5 align-top">
-                        <Input
-                          value={row[field.key]}
-                          placeholder={field.placeholder}
-                          onChange={(event) => onUpdateRow(row.id, field.key, event.target.value)}
-                          className="h-9 px-1.5 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-zinc-700 focus:border-white/20 font-mono text-xs"
-                        />
-                      </td>
-                    ))}
-                    <td className="px-1 pt-2 align-top text-[11px] font-mono text-zinc-400">
+
+                  <div>
+                    <span className="mb-1 block text-[9px] font-mono uppercase tracking-wide text-zinc-600 sm:hidden">
+                      Hours
+                    </span>
+                    <div className="flex min-h-8 items-center rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 text-[11px] font-mono">
                       <span className={row.error ? 'text-red-400' : 'text-zinc-400'}>{row.hoursLabel}</span>
-                      {row.error && <p className="mt-1 text-[10px] text-red-400">{row.error}</p>}
-                    </td>
-                    <td className="px-0.5 pt-1 align-top text-right">
-                      <button type="button" aria-label="Remove row" onClick={() => onRemoveRow(row.id)} className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    {row.error && <p className="mt-1 text-[10px] text-red-400">{row.error}</p>}
+                  </div>
+
+                  <div className="flex items-end justify-end sm:items-center">
+                    <button
+                      type="button"
+                      aria-label={`Remove row ${rowIndex + 1}`}
+                      onClick={() => onRemoveRow(row.id)}
+                      className="h-8 rounded-lg border border-red-400/20 bg-red-400/10 px-2 text-[11px] font-medium text-red-300 transition-colors hover:bg-red-400/20 hover:text-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           <Button type="button" variant="outline" onClick={onAddRow} className="border-white/[0.08] bg-white/[0.03] text-zinc-300 hover:bg-white/[0.06]">
             Add row

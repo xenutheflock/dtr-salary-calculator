@@ -136,6 +136,9 @@ export default function DTRPage() {
           <h1 className="text-2xl font-semibold text-white tracking-tight">
             Salary Calculator
           </h1>
+          <p className="mt-2 text-xs text-zinc-600">
+            Estimates only. Actual deductions may vary.
+          </p>
           <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
             Upload your DTR, review the extracted entries, and get your estimated net pay.
           </p>
@@ -167,12 +170,6 @@ export default function DTRPage() {
           <SalaryResults result={hasCalculated && !formError ? salaryResult : null} cutoff={cutoff} />
         </div>
 
-        {/* Footer */}
-        <div className="mt-16 pb-8 text-center">
-          <p className="text-xs text-zinc-700">
-            Estimates only. Actual deductions may vary.
-          </p>
-        </div>
       </main>
     </div>
   )
